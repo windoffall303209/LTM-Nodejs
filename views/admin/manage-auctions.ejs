@@ -1,0 +1,115 @@
+<%- include('../layout/header') %> <%- include('../layout/navbar') %>
+
+<div class="container my-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-gavel text-primary"></i> Quản lý đấu giá</h1>
+    <a href="/admin" class="btn btn-secondary">
+      <i class="fas fa-arrow-left"></i> Quay lại Dashboard
+    </a>
+  </div>
+
+  <% if (auctions && auctions.length > 0) { %>
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead class="table-dark">
+        <tr>
+          <th>ID</th>
+          <th>Tiêu đề</th>
+          <th>Giá hiện tại</th>
+          <th>Người dẫn đầu</th>
+          <th>Trạng thái</th>
+          <th>Lượt đấu</th>
+          <th>Thời gian</th>
+          <th>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% auctions.forEach(auction => { %>
+        <tr>
+          <td><%= auction.auction_id %></td>
+          <td>
+            <a href="/auction/<%= auction.auction_id %>">
+              <%= auction.title %>
+            </a>
+          </td>
+          <td class="text-success">
+            <%= parseFloat(auction.current_price).toLocaleString('vi-VN') %> VNĐ
+          </td>
+          <td>
+            <%= auction.highestBidder ? auction.highestBidder.username : '-' %>
+          </td>
+          <td>
+            <% if (auction.status === 'ACTIVE') { %>
+            <span class="badge bg-success">Đang diễn ra</span>
+            <% } else if (auction.status === 'ENDED') { %>
+            <span class="badge bg-secondary">Đã kết thúc</span>
+            <% } else { %>
+            <span class="badge bg-danger">Đã hủy</span>
+            <% } %>
+          </td>
+          <td><%= auction.total_bids %></td>
+          <td>
+            <small
+              ><%= new Date(auction.end_time).toLocaleString('vi-VN') %></small
+            >
+          </td>
+          <td>
+            <% if (auction.total_bids === 0) { %>
+            <button
+              class="btn btn-sm btn-danger delete-auction"
+              data-id="<%= auction.auction_id %>"
+            >
+              <i class="fas fa-trash"></i>
+            </button>
+            <% } else { %>
+            <button
+              class="btn btn-sm btn-secondary"
+              disabled
+              title="Không thể xóa (đã có bid)"
+            >
+              <i class="fas fa-trash"></i>
+            </button>
+            <% } %>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <% } else { %>
+  <div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> Chưa có phiên đấu giá nào.
+  </div>
+  <% } %>
+</div>
+
+<script>
+  // Delete auction
+  document.querySelectorAll(".delete-auction").forEach((btn) => {
+    btn.addEventListener("click", async function () {
+      const auctionId = this.dataset.id;
+
+      if (!confirm("Bạn có chắc muốn xóa phiên đấu giá này?")) return;
+
+      try {
+        const response = await fetch(`/api/auctions/${auctionId}`, {
+          method: "DELETE",
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert("Xóa thành công!");
+          location.reload();
+        } else {
+          alert("Lỗi: " + data.message);
+        }
+      } catch (error) {
+        alert("Đã xảy ra lỗi!");
+        console.error(error);
+      }
+    });
+  });
+</script>
+
+<%- include('../layout/footer') %>

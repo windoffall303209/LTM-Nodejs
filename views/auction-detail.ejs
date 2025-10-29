@@ -1,0 +1,185 @@
+<%- include('layout/header') %> <%- include('layout/navbar') %>
+
+<div class="container my-5">
+  <div class="row">
+    <!-- Left Column - Auction Info -->
+    <div class="col-md-8">
+      <div class="card shadow mb-4">
+        <div class="card-body">
+          <h2 class="card-title"><%= auction.title %></h2>
+
+          <% if (auction.status === 'ACTIVE') { %>
+          <span class="badge bg-success mb-3">Đang diễn ra</span>
+          <% } else { %>
+          <span class="badge bg-secondary mb-3">Đã kết thúc</span>
+          <% } %>
+
+          <p class="card-text">
+            <%= auction.description || 'Không có mô tả' %>
+          </p>
+
+          <hr />
+
+          <div class="row text-center mb-4">
+            <div class="col-md-4">
+              <h3 class="text-success" id="currentPrice">
+                <%= parseFloat(auction.current_price).toLocaleString('vi-VN') %>
+              </h3>
+              <small class="text-muted">Giá hiện tại (VNĐ)</small>
+            </div>
+
+            <div class="col-md-4">
+              <h3 class="text-primary" id="highestBidder">
+                <%= auction.highestBidder ? auction.highestBidder.username :
+                'Chưa có' %>
+              </h3>
+              <small class="text-muted">Người dẫn đầu</small>
+            </div>
+
+            <div class="col-md-4">
+              <h3 class="text-danger" id="timeLeft">
+                <i class="fas fa-clock"></i> <span id="countdown">--:--</span>
+              </h3>
+              <small class="text-muted">Thời gian còn lại</small>
+            </div>
+          </div>
+
+          <hr />
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <p>
+                <strong>Giá khởi điểm:</strong> <%=
+                parseFloat(auction.starting_price).toLocaleString('vi-VN') %>
+                VNĐ
+              </p>
+              <p>
+                <strong>Bước nhảy giá:</strong> <%=
+                parseFloat(auction.bid_increment).toLocaleString('vi-VN') %> VNĐ
+              </p>
+            </div>
+            <div class="col-md-6">
+              <p>
+                <strong>Tổng lượt đặt giá:</strong>
+                <span id="totalBids"><%= auction.total_bids %></span>
+              </p>
+              <p>
+                <strong>Người tạo:</strong> <%= auction.creator ?
+                auction.creator.username : 'N/A' %>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bid History -->
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="fas fa-history"></i> Lịch sử đấu giá</h5>
+        </div>
+        <div class="card-body">
+          <div id="bidHistory" class="list-group">
+            <% if (auction.Bids && auction.Bids.length > 0) { %> <%
+            auction.Bids.forEach(bid => { %>
+            <div class="list-group-item">
+              <div class="d-flex w-100 justify-content-between">
+                <h6 class="mb-1"><%= bid.bidder.username %></h6>
+                <small
+                  ><%= new Date(bid.bid_time).toLocaleString('vi-VN') %></small
+                >
+              </div>
+              <p class="mb-1 text-success">
+                <strong
+                  ><%= parseFloat(bid.bid_amount).toLocaleString('vi-VN') %>
+                  VNĐ</strong
+                >
+              </p>
+            </div>
+            <% }) %> <% } else { %>
+            <p class="text-muted">Chưa có lượt đấu giá nào</p>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column - Bid Form -->
+    <div class="col-md-4">
+      <div class="card shadow sticky-top" style="top: 20px">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0"><i class="fas fa-gavel"></i> Đặt giá</h5>
+        </div>
+        <div class="card-body">
+          <% if (auction.status === 'ACTIVE') { %> <% if
+          (auction.highest_bidder_id === user.user_id) { %>
+          <div class="alert alert-success">
+            <i class="fas fa-trophy"></i> Bạn đang dẫn đầu!
+          </div>
+          <% } %>
+
+          <form id="bidForm">
+            <div class="mb-3">
+              <label for="bidAmount" class="form-label">Giá đặt (VNĐ)</label>
+              <input
+                type="number"
+                class="form-control form-control-lg"
+                id="bidAmount"
+                min="<%= parseFloat(auction.current_price) + parseFloat(auction.bid_increment) %>"
+                step="<%= auction.bid_increment %>"
+                placeholder="<%= (parseFloat(auction.current_price) + parseFloat(auction.bid_increment)).toLocaleString('vi-VN') %>"
+                required
+              />
+            </div>
+
+            <div class="d-grid gap-2 mb-3">
+              <button
+                type="button"
+                class="btn btn-outline-primary quick-bid"
+                data-amount="500000"
+              >
+                + 500,000 VNĐ
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-primary quick-bid"
+                data-amount="1000000"
+              >
+                + 1,000,000 VNĐ
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-primary quick-bid"
+                data-amount="5000000"
+              >
+                + 5,000,000 VNĐ
+              </button>
+            </div>
+
+            <button type="submit" class="btn btn-success btn-lg w-100">
+              <i class="fas fa-gavel"></i> Đặt giá ngay
+            </button>
+          </form>
+          <% } else { %>
+          <div class="alert alert-warning">
+            <i class="fas fa-info-circle"></i> Phiên đấu giá đã kết thúc
+          </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/socket-client.js"></script>
+<script src="/js/auction.js"></script>
+<script>
+  const auctionId = <%= auction.auction_id %>;
+  const username = '<%= user.username %>';
+  const currentPrice = <%= auction.current_price %>;
+  const bidIncrement = <%= auction.bid_increment %>;
+
+  // Initialize auction page
+  initAuctionPage(auctionId, username);
+</script>
+
+<%- include('layout/footer') %>

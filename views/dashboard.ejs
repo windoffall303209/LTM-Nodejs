@@ -1,0 +1,129 @@
+<%- include('layout/header') %> <%- include('layout/navbar') %>
+
+<div class="container my-5">
+  <h1 class="mb-4"><i class="fas fa-th-large text-primary"></i> Dashboard</h1>
+
+  <!-- Filter & Search -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-8">
+          <input
+            type="text"
+            class="form-control"
+            id="searchInput"
+            placeholder="Tìm kiếm phiên đấu giá..."
+          />
+        </div>
+        <div class="col-md-4">
+          <select class="form-select" id="statusFilter">
+            <option value="">Tất cả trạng thái</option>
+            <option value="ACTIVE" selected>Đang diễn ra</option>
+            <option value="ENDED">Đã kết thúc</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auctions Grid -->
+  <div id="auctionsContainer">
+    <% if (auctions && auctions.length > 0) { %>
+    <div class="row">
+      <% auctions.forEach(auction => { %>
+      <div
+        class="col-md-4 mb-4 auction-card"
+        data-auction-id="<%= auction.auction_id %>"
+      >
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title"><%= auction.title %></h5>
+            <p class="card-text text-muted">
+              <%= auction.description ? auction.description.substring(0, 100) +
+              '...' : 'Không có mô tả' %>
+            </p>
+            <hr />
+
+            <p class="mb-2">
+              <strong>Giá hiện tại:</strong>
+              <span
+                class="text-success current-price-<%= auction.auction_id %>"
+              >
+                <%= parseFloat(auction.current_price).toLocaleString('vi-VN') %>
+                VNĐ
+              </span>
+            </p>
+
+            <p class="mb-2">
+              <strong>Người dẫn đầu:</strong>
+              <span class="highest-bidder-<%= auction.auction_id %>">
+                <%= auction.highestBidder ? auction.highestBidder.username :
+                'Chưa có' %>
+              </span>
+            </p>
+
+            <p class="mb-2">
+              <strong>Thời gian còn lại:</strong>
+              <span class="badge bg-info time-left-<%= auction.auction_id %>">
+                <i class="fas fa-clock"></i> Đang tính...
+              </span>
+            </p>
+
+            <p class="mb-3">
+              <strong>Trạng thái:</strong>
+              <% if (auction.status === 'ACTIVE') { %>
+              <span class="badge bg-success">Đang diễn ra</span>
+              <% } else if (auction.status === 'ENDED') { %>
+              <span class="badge bg-secondary">Đã kết thúc</span>
+              <% } %>
+            </p>
+
+            <a
+              href="/auction/<%= auction.auction_id %>"
+              class="btn btn-primary w-100"
+            >
+              <i class="fas fa-gavel"></i> Xem chi tiết & Đấu giá
+            </a>
+          </div>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+    <% } else { %>
+    <div class="alert alert-info">
+      <i class="fas fa-info-circle"></i> Không có phiên đấu giá nào.
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+  // Basic filter & search functionality
+  document
+    .getElementById("searchInput")
+    .addEventListener("input", filterAuctions);
+  document
+    .getElementById("statusFilter")
+    .addEventListener("change", filterAuctions);
+
+  function filterAuctions() {
+    const searchTerm = document
+      .getElementById("searchInput")
+      .value.toLowerCase();
+    const statusFilter = document.getElementById("statusFilter").value;
+    const cards = document.querySelectorAll(".auction-card");
+
+    cards.forEach((card) => {
+      const title = card.querySelector(".card-title").textContent.toLowerCase();
+      const matchSearch = title.includes(searchTerm);
+
+      if (matchSearch) {
+        card.style.display = "block";
+      } else {
+        card.style.display = "none";
+      }
+    });
+  }
+</script>
+
+<%- include('layout/footer') %>

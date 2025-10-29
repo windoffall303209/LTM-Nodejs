@@ -1,0 +1,14 @@
+# Ignore EJS files (Prettier breaks EJS syntax)
+*.ejs
+views/**/*.ejs
+
+# Ignore node_modules
+node_modules/
+
+# Ignore build files
+dist/
+build/
+
+# Ignore logs
+*.log
+

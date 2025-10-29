@@ -1,0 +1,85 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <i class="fas fa-gavel"></i> Auction System
+    </a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <% if (user) { %>
+        <li class="nav-item">
+          <a class="nav-link" href="/dashboard">
+            <i class="fas fa-th-large"></i> Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/my-bids">
+            <i class="fas fa-history"></i> Lịch sử đấu giá
+          </a>
+        </li>
+        <% if (user.role === 'ADMIN') { %>
+        <li class="nav-item">
+          <a class="nav-link" href="/admin">
+            <i class="fas fa-cog"></i> Quản trị
+          </a>
+        </li>
+        <% } %>
+        <li class="nav-item dropdown">
+          <a
+            class="nav-link dropdown-toggle"
+            href="#"
+            id="navbarDropdown"
+            role="button"
+            data-bs-toggle="dropdown"
+          >
+            <i class="fas fa-user"></i> <%= user.username %>
+          </a>
+          <ul class="dropdown-menu">
+            <li>
+              <a class="dropdown-item" href="/profile">
+                <i class="fas fa-user-circle"></i> Hồ sơ
+              </a>
+            </li>
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+              <a class="dropdown-item" href="/auth/logout">
+                <i class="fas fa-sign-out-alt"></i> Đăng xuất
+              </a>
+            </li>
+          </ul>
+        </li>
+        <% } else { %>
+        <li class="nav-item">
+          <a class="nav-link" href="/login">
+            <i class="fas fa-sign-in-alt"></i> Đăng nhập
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/register">
+            <i class="fas fa-user-plus"></i> Đăng ký
+          </a>
+        </li>
+        <% } %>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<% if (success_msg && success_msg.length > 0) { %>
+<div class="alert alert-success alert-dismissible fade show m-3" role="alert">
+  <%= success_msg %>
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<% } %> <% if (error_msg && error_msg.length > 0) { %>
+<div class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+  <%= error_msg %>
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<% } %>

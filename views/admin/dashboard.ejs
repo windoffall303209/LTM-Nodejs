@@ -1,0 +1,155 @@
+<%- include('../layout/header') %> <%- include('../layout/navbar') %>
+
+<div class="container my-5">
+  <h1 class="mb-4">
+    <i class="fas fa-cog text-primary"></i> Quản trị hệ thống
+  </h1>
+
+  <!-- Stats Cards -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card text-white bg-primary shadow">
+        <div class="card-body text-center">
+          <h3><%= stats.totalUsers || 0 %></h3>
+          <p class="mb-0"><i class="fas fa-users"></i> Tổng người dùng</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card text-white bg-success shadow">
+        <div class="card-body text-center">
+          <h3><%= stats.activeAuctions || 0 %></h3>
+          <p class="mb-0"><i class="fas fa-gavel"></i> Đấu giá đang diễn ra</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card text-white bg-info shadow">
+        <div class="card-body text-center">
+          <h3><%= stats.totalAuctions || 0 %></h3>
+          <p class="mb-0"><i class="fas fa-list"></i> Tổng đấu giá</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card text-white bg-warning shadow">
+        <div class="card-body text-center">
+          <h3><%= stats.totalBids || 0 %></h3>
+          <p class="mb-0"><i class="fas fa-chart-line"></i> Tổng lượt đấu</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="card shadow">
+    <div class="card-header bg-dark text-white">
+      <h5 class="mb-0">Thao tác nhanh</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <a href="/admin/auctions" class="btn btn-primary w-100">
+            <i class="fas fa-gavel"></i> Quản lý đấu giá
+          </a>
+        </div>
+        <div class="col-md-4 mb-3">
+          <button
+            class="btn btn-success w-100"
+            data-bs-toggle="modal"
+            data-bs-target="#createAuctionModal"
+          >
+            <i class="fas fa-plus"></i> Tạo đấu giá mới
+          </button>
+        </div>
+        <div class="col-md-4 mb-3">
+          <a href="/api/admin/logs" class="btn btn-info w-100">
+            <i class="fas fa-file-alt"></i> Xem logs
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Auction Modal -->
+<div class="modal fade" id="createAuctionModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Tạo phiên đấu giá mới</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form id="createAuctionForm">
+          <div class="mb-3">
+            <label class="form-label">Tiêu đề</label>
+            <input type="text" class="form-control" name="title" required />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Mô tả</label>
+            <textarea
+              class="form-control"
+              name="description"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Giá khởi điểm (VNĐ)</label>
+            <input
+              type="number"
+              class="form-control"
+              name="starting_price"
+              min="0"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Thời gian đấu giá (phút)</label>
+            <input
+              type="number"
+              class="form-control"
+              name="duration"
+              min="1"
+              value="60"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Bước nhảy giá (VNĐ)</label>
+            <input
+              type="number"
+              class="form-control"
+              name="bid_increment"
+              value="500000"
+              required
+            />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Hủy
+        </button>
+        <button type="button" class="btn btn-success" id="submitCreateAuction">
+          Tạo
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/admin.js"></script>
+
+<%- include('../layout/footer') %>
