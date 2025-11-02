@@ -1,0 +1,21 @@
+{
+  "name": "auction-system-client",
+  "version": "1.0.0",
+  "description": "Frontend client for Online Auction System",
+  "main": "index.js",
+  "scripts": {
+    "start": "live-server public --port=5500",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": [
+    "auction",
+    "bidding",
+    "websocket"
+  ],
+  "author": "Your Team",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  },
+  "dependencies": {}
+}

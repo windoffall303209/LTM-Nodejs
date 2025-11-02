@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Watchlist - Auction System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary" id="mainNav">
+      <!-- Header will be rendered by header.js -->
+    </nav>
+
+    <div class="container py-5">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>⭐ Danh Sách Theo Dõi</h2>
+        <button class="btn btn-outline-secondary btn-sm" onclick="loadWatchlist()">
+          <i class="bi bi-arrow-clockwise"></i> Làm mới
+        </button>
+      </div>
+
+      <div id="watchlistContainer">
+        <div class="text-center">
+          <div class="spinner-border text-primary" role="status"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/header.js"></script>
+    <script>
+      // Require authentication
+      if (!Auth.requireAuth()) {
+        throw new Error('Not authenticated');
+      }
+
+      // Render header
+      renderHeader('watchlist');
+
+      /**
+       * Load user's watchlist from API
+       */
+      async function loadWatchlist() {
+        const userId = Auth.getUserId();
+        const container = document.getElementById('watchlistContainer');
+
+        container.innerHTML = '<div class="text-center"><div class="spinner-border text-primary"></div></div>';
+
+        try {
+          const response = await fetch(`${window.API_CONFIG.BASE_URL}/api/watchlist/user?userId=${userId}`, {
+            credentials: 'include'
+          });
+          const result = await response.json();
+
+          if (result.success) {
+            displayWatchlist(result.data || []);
+          } else {
+            throw new Error(result.message || 'Không thể tải dữ liệu');
+          }
+        } catch (error) {
+          console.error('Error loading watchlist:', error);
+          container.innerHTML = `
+            <div class="alert alert-danger">
+              <i class="bi bi-exclamation-triangle"></i> Không thể tải danh sách theo dõi: ${error.message}
+            </div>
+          `;
+        }
+      }
+
+      /**
+       * Display watchlist items
+       */
+      function displayWatchlist(watchlist) {
+        const container = document.getElementById('watchlistContainer');
+
+        if (watchlist.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-5">
+              <i class="bi bi-star" style="font-size: 4rem; color: #ccc;"></i>
+              <h4 class="text-muted mt-3">Danh sách theo dõi của bạn đang trống</h4>
+              <p class="text-muted">Thêm các đấu giá yêu thích vào danh sách để theo dõi dễ dàng hơn</p>
+              <a href="dashboard.html" class="btn btn-primary mt-3">
+                <i class="bi bi-arrow-right"></i> Xem các đấu giá
+              </a>
+            </div>
+          `;
+          return;
+        }
+
+        let html = '<div class="row g-4">';
+
+        watchlist.forEach(item => {
+          const auction = item.auction || {};
+          const statusBadge = getStatusBadge(auction.status);
+          const imageUrl = auction.imageUrl || 'https://via.placeholder.com/400x300';
+
+          html += `
+            <div class="col-md-4">
+              <div class="card shadow-sm h-100">
+                <div class="position-relative">
+                  <img src="${imageUrl}" class="card-img-top" alt="${auction.title}"
+                       style="height: 200px; object-fit: cover" />
+                  <button class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2"
+                          onclick="removeFromWatchlist(${item.watchlistId}, ${item.auctionId})"
+                          title="Xóa khỏi theo dõi">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+                <div class="card-body">
+                  <h5 class="card-title">${auction.title || 'N/A'}</h5>
+                  <p class="card-text text-muted small">${truncateText(auction.description || '', 100)}</p>
+
+                  <div class="mb-2">
+                    <strong>Giá hiện tại:</strong>
+                    <div class="text-success fs-5 fw-bold">${formatCurrency(auction.currentPrice)}</div>
+                  </div>
+
+                  <div class="mb-2">
+                    <strong>Trạng thái:</strong>
+                    ${statusBadge}
+                  </div>
+
+                  <div class="mb-2">
+                    <small class="text-muted">
+                      <i class="bi bi-person-fill"></i> ${auction.totalBids || 0} lượt đặt giá
+                    </small>
+                  </div>
+
+                  <div class="small text-muted">
+                    <i class="bi bi-clock"></i> Đã thêm: ${new Date(item.addedAt).toLocaleDateString('vi-VN')}
+                  </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                  <a href="auction-detail.html?id=${auction.auctionId}" class="btn btn-primary btn-sm w-100">
+                    <i class="bi bi-eye"></i> Xem chi tiết
+                  </a>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+      }
+
+      /**
+       * Remove item from watchlist
+       */
+      async function removeFromWatchlist(watchlistId, auctionId) {
+        const userId = Auth.getUserId();
+
+        if (!confirm('Bạn có chắc muốn xóa khỏi danh sách theo dõi?')) {
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `${window.API_CONFIG.BASE_URL}/api/watchlist/auction/${auctionId}?userId=${userId}`,
+            {
+              method: 'DELETE',
+              credentials: 'include'
+            }
+          );
+
+          const result = await response.json();
+
+          if (result.success) {
+            showAlert('success', 'Đã xóa khỏi danh sách theo dõi');
+            loadWatchlist(); // Reload the list
+          } else {
+            showAlert('danger', result.message || 'Không thể xóa');
+          }
+        } catch (error) {
+          console.error('Error removing from watchlist:', error);
+          showAlert('danger', 'Có lỗi xảy ra: ' + error.message);
+        }
+      }
+
+      /**
+       * Get status badge HTML
+       */
+      function getStatusBadge(status) {
+        const badges = {
+          'ACTIVE': '<span class="badge bg-success">Đang diễn ra</span>',
+          'PENDING': '<span class="badge bg-warning">Sắp diễn ra</span>',
+          'ENDED': '<span class="badge bg-secondary">Đã kết thúc</span>'
+        };
+        return badges[status] || '<span class="badge bg-secondary">N/A</span>';
+      }
+
+      /**
+       * Truncate text to max length
+       */
+      function truncateText(text, maxLength) {
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
+      }
+
+      /**
+       * Format currency helper
+       */
+      function formatCurrency(amount) {
+        return new Intl.NumberFormat('vi-VN').format(amount) + ' VND';
+      }
+
+      /**
+       * Show alert message
+       */
+      function showAlert(type, message) {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+        alert.style.zIndex = '9999';
+        alert.innerHTML = `
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alert);
+
+        setTimeout(() => {
+          alert.remove();
+        }, 3000);
+      }
+
+      // Initialize page
+      document.addEventListener('DOMContentLoaded', loadWatchlist);
+    </script>
+  </body>
+</html>

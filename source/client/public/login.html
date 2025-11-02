@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập - Auction System</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Inline styles cho login page */
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-container {
+            width: 100%;
+            max-width: 480px;
+        }
+        .login-card {
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="card login-card">
+            <div class="card-body p-5">
+                <!-- Header -->
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold">🔨 Auction System</h2>
+                    <p class="text-muted">Đăng nhập vào hệ thống</p>
+                </div>
+
+                <!-- Alert Container -->
+                <div id="alertContainer"></div>
+
+                <!-- Login Form -->
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control form-control-lg" id="username" name="username" required placeholder="Nhập username">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control form-control-lg" id="password" name="password" required placeholder="Nhập password">
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="rememberMe" name="remember-me">
+                        <label class="form-check-label" for="rememberMe">Ghi nhớ đăng nhập</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                        Đăng nhập
+                    </button>
+
+                    <div class="text-center">
+                        <p class="mb-0">
+                            Chưa có tài khoản?
+                            <a href="register.html" class="text-decoration-none fw-bold">Đăng ký ngay</a>
+                        </p>
+                        <a href="index.html" class="text-muted small">← Quay về trang chủ</a>
+                    </div>
+                </form>
+
+                <!-- Demo Account Info -->
+                <div class="alert alert-info mt-4" role="alert">
+                    <strong>Demo Account:</strong><br>
+                    Username: <code>admin</code> | Password: <code>admin123</code><br>
+                    <small class="text-muted">Hoặc đăng ký tài khoản mới</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Config -->
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Login Logic Implementation
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const alertContainer = document.getElementById('alertContainer');
+
+            // Clear previous alerts
+            alertContainer.innerHTML = '';
+
+            // Validate
+            if (!username || !password) {
+                showAlert('Vui lòng nhập đầy đủ thông tin!', 'danger');
+                return;
+            }
+
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang đăng nhập...';
+
+            try {
+                // Call Login API
+                const response = await fetch(getApiUrl('/auth/login'), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Save auth data
+                    if (data.data.userId) {
+                        localStorage.setItem('userId', data.data.userId);
+                        localStorage.setItem('username', data.data.username);
+                        localStorage.setItem('userRole', data.data.role);
+                        if (data.data.token) {
+                            localStorage.setItem('token', data.data.token);
+                        }
+                    }
+
+                    showAlert('Đăng nhập thành công! Đang chuyển hướng...', 'success');
+
+                    // Redirect based on role
+                    setTimeout(() => {
+                        if (data.data.role === 'ADMIN') {
+                            window.location.href = 'admin/dashboard.html';
+                        } else {
+                            window.location.href = 'dashboard.html';
+                        }
+                    }, 1000);
+                } else {
+                    showAlert(data.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.', 'danger');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Đăng nhập';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showAlert('Không thể kết nối đến server. Vui lòng kiểm tra server đã chạy chưa.', 'danger');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Đăng nhập';
+            }
+        });
+
+        // Helper function to show alerts
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+
+        // Check if already logged in
+        if (localStorage.getItem('userId')) {
+            const role = localStorage.getItem('userRole');
+            if (role === 'ADMIN') {
+                window.location.href = 'admin/dashboard.html';
+            } else {
+                window.location.href = 'dashboard.html';
+            }
+        }
+    </script>
+</body>
+</html>

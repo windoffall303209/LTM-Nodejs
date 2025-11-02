@@ -1,0 +1,108 @@
+/* =====================================================
+   AUCTION SYSTEM - CUSTOM CSS
+   Foundation Code - Chỉ chứa styles cơ bản
+   ===================================================== */
+
+/* General Styles */
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+}
+
+/* Hero Section */
+.hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.hero h1 {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Card Styles */
+.card {
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: none;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Navbar */
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  text-align: center;
+  padding: 3rem;
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Animations */
+.fade-in {
+  animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.slide-up {
+  animation: slideUp 0.5s;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
+}
+
+/* =====================================================
+   Chỗ này sẽ thêm các styles cụ thể
+   ===================================================== */
+
+/* Chỗ này sẽ thêm Admin styles:
+   - Admin dashboard styles
+   - Admin table styles
+   - Admin form styles
+*/
+
+/* Chỗ này sẽ thêm User styles:
+   - Auction card styles
+   - Bid button styles
+   - Bid history styles
+   - Watchlist styles
+*/
+
+/* Chỗ này sẽ thêm Core styles:
+   - Countdown timer styles
+   - Price display styles
+   - Status badge styles
+   - Notification styles
+*/
