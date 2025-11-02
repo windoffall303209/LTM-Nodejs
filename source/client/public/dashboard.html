@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - Auction System</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .navbar {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 1000;
+        transition: all 0.3s ease;
+      }
+
+      body {
+        padding-top: 70px;
+      }
+
+      /* Ribbon for pending auctions */
+      .ribbon-wrapper {
+        width: 85px;
+        height: 88px;
+        overflow: hidden;
+        position: absolute;
+        top: -3px;
+        right: -3px;
+        z-index: 10;
+      }
+
+      .ribbon {
+        font-size: 11px;
+        font-weight: bold;
+        color: #333;
+        text-align: center;
+        transform: rotate(45deg);
+        position: relative;
+        padding: 7px 0;
+        left: -5px;
+        top: 15px;
+        width: 120px;
+        box-shadow: 0 4px 6px rgba(0,0,0,.1);
+      }
+
+      .card.border-warning {
+        border-width: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary" id="mainNav">
+      <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="dashboard.html">🔨 Auction System</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="nav-link active fw-semibold" href="dashboard.html">Dashboard</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link text-white fw-semibold" href="my-bids.html">Lịch Sử Đấu Giá</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link text-white fw-semibold" href="watchlist.html">Theo Dõi</a>
+            </li>
+            <!-- Admin Menu -->
+            <li class="nav-item" id="adminMenu" style="display: none;">
+              <a class="nav-link text-warning fw-bold" href="admin/dashboard.html">
+                👑 Quản Trị
+              </a>
+            </li>
+          </ul>
+          <ul class="navbar-nav">
+            <!-- User Balance -->
+            <li class="nav-item d-none d-lg-block">
+              <span class="nav-link text-white">
+                <strong>💰 <span id="userBalance">0 VND</span></strong>
+              </span>
+            </li>
+            <!-- Username with Dropdown -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <strong>👤 <span id="userName">User</span></strong>
+                <span id="userRole" class="badge bg-info ms-1">USER</span>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li class="dropdown-header">
+                  <strong>Thông tin tài khoản</strong>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <span class="dropdown-item-text">
+                    <small class="text-muted">Tên đầy đủ:</small><br/>
+                    <strong id="dropdownFullName">Full Name</strong>
+                  </span>
+                </li>
+                <li>
+                  <span class="dropdown-item-text">
+                    <small class="text-muted">Email:</small><br/>
+                    <strong id="dropdownEmail">email@example.com</strong>
+                  </span>
+                </li>
+                <li>
+                  <span class="dropdown-item-text">
+                    <small class="text-muted">Số dư:</small><br/>
+                    <strong class="text-success" id="dropdownBalance">0 VND</strong>
+                  </span>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <div class="px-2">
+                    <button onclick="handleLogout(event)" class="btn btn-danger btn-sm w-100">
+                      <i class="bi bi-box-arrow-right"></i> Đăng xuất
+                    </button>
+                  </div>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+      <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3">
+          <div class="card">
+            <div class="card-header bg-primary text-white">
+              <h5 class="mb-0">Bộ lọc</h5>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label">Tìm kiếm</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="searchInput"
+                  placeholder="Nhập từ khóa..."
+                />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Trạng thái</label>
+                <select class="form-select" id="statusFilter" onchange="applyFilters()">
+                  <option value="" selected>Tất cả</option>
+                  <option value="ACTIVE">Đang diễn ra</option>
+                  <option value="PENDING">Sắp diễn ra</option>
+                  <option value="ENDED">Đã kết thúc</option>
+                </select>
+              </div>
+              <button class="btn btn-primary w-100" onclick="applyFilters()">
+                Áp dụng
+              </button>
+            </div>
+          </div>
+
+          <!-- Statistics -->
+          <div class="card mt-3">
+            <div class="card-header bg-success text-white">
+              <h5 class="mb-0">Thống kê</h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between mb-2">
+                <span>Tổng số đấu giá:</span>
+                <strong id="totalCount">0</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Đang diễn ra:</span>
+                <strong id="activeCount" class="text-success">0</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Sắp diễn ra:</span>
+                <strong id="pendingCount" class="text-warning">0</strong>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span>Đã kết thúc:</span>
+                <strong id="endedCount" class="text-muted">0</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+          <h2 class="mb-4">🔨 Danh Sách Các Cuộc Đấu Giá</h2>
+
+          <div class="row g-4" id="auctionsList">
+            <!-- Auctions will be loaded here via JavaScript -->
+            <div class="col-12 text-center">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="noAuctions" class="text-center py-5" style="display: none">
+            <h4 class="text-muted">Không tìm thấy cuộc đấu giá nào</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/header.js"></script>
+    <script src="js/dashboard.js"></script>
+  </body>
+</html>

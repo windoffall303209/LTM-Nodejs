@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auction Detail - Auction System</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .navbar {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 1000;
+      }
+
+      body {
+        padding-top: 70px;
+      }
+
+      .sticky-sidebar {
+        position: sticky;
+        top: 80px;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+      }
+
+      .bid-history-item {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .status-message {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        z-index: 1050;
+        min-width: 300px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary" id="mainNav">
+      <!-- Header will be rendered by header.js -->
+    </nav>
+
+    <div class="container-fluid py-4">
+      <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+          <!-- Auction Image and Info -->
+          <div class="card mb-4">
+            <img id="auctionImage" src="" class="card-img-top" alt="Auction Image" style="max-height: 500px; object-fit: cover" />
+            <div class="card-body">
+              <h2 id="auctionTitle" class="card-title">Loading...</h2>
+              <p id="auctionDescription" class="card-text"></p>
+
+              <div class="row mt-4">
+                <div class="col-md-6">
+                  <p><strong>Người bán:</strong> <span id="sellerName">-</span></p>
+                  <p><strong>Thời gian bắt đầu:</strong> <span id="startTime">-</span></p>
+                  <p><strong>Thời gian kết thúc:</strong> <span id="endTime">-</span></p>
+                </div>
+                <div class="col-md-6">
+                  <p><strong>Giá khởi điểm:</strong> <span id="startPrice">-</span></p>
+                  <p><strong>Bước giá tối thiểu:</strong> <span id="minIncrement">100,000 VND</span></p>
+                  <p><strong>Trạng thái:</strong> <span id="auctionStatus" class="badge bg-success">Đang diễn ra</span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+          <div class="sticky-sidebar">
+            <!-- Bidding Card -->
+            <div class="card mb-3">
+              <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Thông Tin Đấu Giá</h5>
+              </div>
+              <div class="card-body">
+                <div class="text-center mb-3">
+                  <h6 class="text-muted">Giá hiện tại</h6>
+                  <h2 class="text-success" id="currentPrice">0 VND</h2>
+                </div>
+
+                <div class="mb-3">
+                  <p class="mb-1"><strong>Người dẫn đầu:</strong></p>
+                  <p id="highestBidder" class="text-muted">Chưa có</p>
+                </div>
+
+                <div class="mb-3">
+                  <p class="mb-1"><strong>Tổng lượt đặt giá:</strong></p>
+                  <p id="totalBids">0</p>
+                </div>
+
+                <div class="mb-3">
+                  <p class="mb-1"><strong>Thời gian còn lại:</strong></p>
+                  <h4 id="timeRemaining" class="text-danger">--:--:--</h4>
+                </div>
+
+                <hr />
+
+                <!-- Bid Form -->
+                <form id="bidForm">
+                  <div class="mb-3">
+                    <label class="form-label">Giá đặt tối thiểu:</label>
+                    <p id="minimumBid" class="fw-bold">0 VND</p>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="bidAmount" class="form-label">Số tiền đặt giá:</label>
+                    <input
+                      type="number"
+                      class="form-control form-control-lg"
+                      id="bidAmount"
+                      required
+                      step="100000"
+                      min="0"
+                    />
+                  </div>
+
+                  <button type="submit" class="btn btn-primary btn-lg w-100">
+                    Đặt Giá Ngay
+                  </button>
+                </form>
+
+                <!-- Watchlist Button -->
+                <button id="watchlistBtn" class="btn btn-outline-warning w-100 mt-2">
+                  ⭐ Thêm vào theo dõi
+                </button>
+              </div>
+            </div>
+
+            <!-- Bid History -->
+            <div class="card">
+              <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Lịch Sử Đặt Giá</h5>
+              </div>
+              <div class="card-body p-0">
+                <div id="bidHistoryList" style="max-height: 400px; overflow-y: auto">
+                  <!-- Bid history will be loaded here -->
+                  <p class="text-muted text-center p-3">Loading...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/header.js"></script>
+    <script src="js/auction.js"></script>
+    <script>
+      // Require authentication
+      if (!Auth.requireAuth()) {
+        throw new Error('Not authenticated');
+      }
+
+      // Render header
+      renderHeader('auction-detail');
+
+      // Get auction ID from URL parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const auctionId = urlParams.get('id');
+
+      let auctionManager;
+
+      if (!auctionId) {
+        alert('Invalid auction ID');
+        window.location.href = 'dashboard.html';
+      } else {
+        // Initialize auction manager with WebSocket
+        auctionManager = new AuctionManager(auctionId);
+        loadAuctionDetails();
+        auctionManager.init();
+      }
+
+      // Load auction details from API
+      async function loadAuctionDetails() {
+        try {
+          const response = await fetch(`${window.API_CONFIG.BASE_URL}/api/auctions/${auctionId}`, {
+            credentials: 'include'
+          });
+          const result = await response.json();
+
+          if (result.success) {
+            displayAuctionDetails(result.data);
+          } else {
+            alert('Không thể tải thông tin đấu giá');
+            window.location.href = 'dashboard.html';
+          }
+        } catch (error) {
+          console.error('Error loading auction:', error);
+          alert('Có lỗi xảy ra khi tải thông tin đấu giá');
+        }
+      }
+
+      // Display auction details
+      function displayAuctionDetails(auction) {
+        document.title = auction.title + ' - Auction System';
+        document.getElementById('auctionTitle').textContent = auction.title;
+        document.getElementById('auctionDescription').textContent = auction.description;
+        document.getElementById('auctionImage').src = auction.imageUrl || 'https://via.placeholder.com/800x400';
+        document.getElementById('sellerName').textContent = auction.sellerName || 'N/A';
+        document.getElementById('startTime').textContent = new Date(auction.startTime).toLocaleString('vi-VN');
+        document.getElementById('endTime').textContent = new Date(auction.endTime).toLocaleString('vi-VN');
+        document.getElementById('startPrice').textContent = formatCurrency(auction.startPrice);
+        document.getElementById('currentPrice').textContent = formatCurrency(auction.currentPrice);
+        document.getElementById('highestBidder').textContent = auction.highestBidder || 'Chưa có';
+        document.getElementById('totalBids').textContent = auction.totalBids || 0;
+
+        // Set minimum bid
+        const minBid = auction.currentPrice + 100000;
+        document.getElementById('minimumBid').textContent = formatCurrency(minBid);
+        document.getElementById('bidAmount').value = minBid;
+
+        // Update status
+        const statusBadges = {
+          'ACTIVE': '<span class="badge bg-success">Đang diễn ra</span>',
+          'PENDING': '<span class="badge bg-warning">Sắp diễn ra</span>',
+          'ENDED': '<span class="badge bg-danger">Đã kết thúc</span>'
+        };
+        document.getElementById('auctionStatus').outerHTML = statusBadges[auction.status] || '';
+      }
+
+      // Handle bid form submission
+      document.getElementById('bidForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const amount = parseFloat(document.getElementById('bidAmount').value);
+        await auctionManager.placeBid(amount);
+      });
+
+      // Format currency helper
+      function formatCurrency(amount) {
+        return new Intl.NumberFormat('vi-VN').format(amount) + ' VND';
+      }
+
+      // ============ WATCHLIST FUNCTIONALITY ============
+
+      let isInWatchlist = false;
+
+      // Check if auction is in watchlist
+      async function checkWatchlistStatus() {
+        const userId = localStorage.getItem('userId');
+        if (!userId || !auctionId) return;
+
+        try {
+          const response = await fetch(
+            `${window.API_CONFIG.BASE_URL}/api/watchlist/check?userId=${userId}&auctionId=${auctionId}`,
+            { credentials: 'include' }
+          );
+          const result = await response.json();
+
+          if (result.success) {
+            isInWatchlist = result.data;
+            updateWatchlistButton();
+          }
+        } catch (error) {
+          console.error('Error checking watchlist:', error);
+        }
+      }
+
+      // Update watchlist button appearance
+      function updateWatchlistButton() {
+        const btn = document.getElementById('watchlistBtn');
+        if (isInWatchlist) {
+          btn.innerHTML = '⭐ Đang theo dõi';
+          btn.classList.remove('btn-outline-warning');
+          btn.classList.add('btn-warning');
+        } else {
+          btn.innerHTML = '⭐ Thêm vào theo dõi';
+          btn.classList.remove('btn-warning');
+          btn.classList.add('btn-outline-warning');
+        }
+      }
+
+      // Toggle watchlist
+      async function toggleWatchlist() {
+        const userId = localStorage.getItem('userId');
+        if (!userId || !auctionId) {
+          alert('Vui lòng đăng nhập để sử dụng tính năng này');
+          return;
+        }
+
+        try {
+          if (isInWatchlist) {
+            // Remove from watchlist
+            const response = await fetch(
+              `${window.API_CONFIG.BASE_URL}/api/watchlist/auction/${auctionId}?userId=${userId}`,
+              {
+                method: 'DELETE',
+                credentials: 'include'
+              }
+            );
+            const result = await response.json();
+
+            if (result.success) {
+              isInWatchlist = false;
+              updateWatchlistButton();
+              showToast('Đã xóa khỏi danh sách theo dõi', 'success');
+            } else {
+              showToast(result.message || 'Có lỗi xảy ra', 'danger');
+            }
+          } else {
+            // Add to watchlist
+            const response = await fetch(
+              `${window.API_CONFIG.BASE_URL}/api/watchlist?userId=${userId}&auctionId=${auctionId}`,
+              {
+                method: 'POST',
+                credentials: 'include'
+              }
+            );
+            const result = await response.json();
+
+            if (result.success) {
+              isInWatchlist = true;
+              updateWatchlistButton();
+              showToast('Đã thêm vào danh sách theo dõi', 'success');
+            } else {
+              showToast(result.message || 'Có lỗi xảy ra', 'danger');
+            }
+          }
+        } catch (error) {
+          console.error('Error toggling watchlist:', error);
+          showToast('Lỗi kết nối', 'danger');
+        }
+      }
+
+      // Show toast notification
+      function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+        toast.style.zIndex = '9999';
+        toast.innerHTML = `
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+          toast.remove();
+        }, 3000);
+      }
+
+      // Add click event listener to watchlist button
+      document.getElementById('watchlistBtn').addEventListener('click', toggleWatchlist);
+
+      // Check watchlist status on page load
+      checkWatchlistStatus();
+
+      // Cleanup on page unload
+      window.addEventListener('beforeunload', () => {
+        if (auctionManager) {
+          auctionManager.destroy();
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lịch Sử Đấu Giá - Auction System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary" id="mainNav">
+      <!-- Header will be rendered by header.js -->
+    </nav>
+
+    <div class="container py-5">
+      <h2 class="mb-4">📜 Lịch Sử Đấu Giá Của Bạn</h2>
+
+      <div id="bidsContainer">
+        <div class="text-center">
+          <div class="spinner-border text-primary" role="status"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/header.js"></script>
+    <script>
+      // Require authentication
+      if (!Auth.requireAuth()) {
+        throw new Error('Not authenticated');
+      }
+
+      // Render header
+      renderHeader('my-bids');
+
+      /**
+       * Load user's bid history from API
+       */
+      async function loadMyBids() {
+        const userId = Auth.getUserId();
+
+        try {
+          const response = await fetch(`${window.API_CONFIG.BASE_URL}/api/bids/user?userId=${userId}`, {
+            credentials: 'include'
+          });
+          const result = await response.json();
+
+          if (result.success) {
+            displayBids(result.data || []);
+          } else {
+            throw new Error(result.message || 'Không thể tải dữ liệu');
+          }
+        } catch (error) {
+          console.error('Error loading bids:', error);
+          document.getElementById('bidsContainer').innerHTML = `
+            <div class="alert alert-danger">
+              <i class="bi bi-exclamation-triangle"></i> Không thể tải lịch sử đấu giá: ${error.message}
+            </div>
+          `;
+        }
+      }
+
+      /**
+       * Display bids in a table
+       */
+      function displayBids(bids) {
+        const container = document.getElementById('bidsContainer');
+
+        if (bids.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-5">
+              <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+              <h4 class="text-muted mt-3">Bạn chưa tham gia đấu giá nào</h4>
+              <p class="text-muted">Hãy bắt đầu tham gia đấu giá để xem lịch sử tại đây</p>
+              <a href="dashboard.html" class="btn btn-primary mt-3">
+                <i class="bi bi-arrow-right"></i> Xem các đấu giá
+              </a>
+            </div>
+          `;
+          return;
+        }
+
+        // Group bids by auction
+        const bidsByAuction = {};
+        bids.forEach(bid => {
+          if (!bidsByAuction[bid.auctionId]) {
+            bidsByAuction[bid.auctionId] = {
+              auctionTitle: bid.auctionTitle,
+              auctionId: bid.auctionId,
+              bids: []
+            };
+          }
+          bidsByAuction[bid.auctionId].bids.push(bid);
+        });
+
+        let html = '<div class="row g-4">';
+
+        Object.values(bidsByAuction).forEach(auction => {
+          const latestBid = auction.bids[0];
+          const totalBidsForAuction = auction.bids.length;
+          const highestBidAmount = Math.max(...auction.bids.map(b => b.bidAmount));
+
+          html += `
+            <div class="col-md-6">
+              <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                  <h6 class="mb-0">
+                    <i class="bi bi-hammer"></i> ${auction.auctionTitle || 'Đấu giá #' + auction.auctionId}
+                  </h6>
+                  <span class="badge bg-light text-primary">${totalBidsForAuction} lượt</span>
+                </div>
+                <div class="card-body">
+                  <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                      <strong>Giá cao nhất của bạn:</strong>
+                      <span class="text-success fs-5 fw-bold">${formatCurrency(highestBidAmount)}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                      <strong>Lượt đặt giá gần nhất:</strong>
+                      <span>${new Date(latestBid.bidTime).toLocaleString('vi-VN')}</span>
+                    </div>
+                  </div>
+
+                  <div class="border-top pt-3">
+                    <h6 class="text-muted mb-2">Lịch sử đặt giá:</h6>
+                    <div style="max-height: 200px; overflow-y: auto;">
+                      ${auction.bids.map(bid => `
+                        <div class="d-flex justify-content-between align-items-center mb-2 small">
+                          <span>${formatCurrency(bid.bidAmount)}</span>
+                          <span class="text-muted">${new Date(bid.bidTime).toLocaleTimeString('vi-VN')}</span>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                  <a href="auction-detail.html?id=${auction.auctionId}" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="bi bi-eye"></i> Xem chi tiết đấu giá
+                  </a>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+      }
+
+      /**
+       * Format currency helper
+       */
+      function formatCurrency(amount) {
+        return new Intl.NumberFormat('vi-VN').format(amount) + ' VND';
+      }
+
+      // Initialize page
+      document.addEventListener('DOMContentLoaded', loadMyBids);
+    </script>
+  </body>
+</html>
